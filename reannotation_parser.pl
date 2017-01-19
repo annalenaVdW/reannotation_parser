@@ -85,7 +85,6 @@ my %maker_genes=();
 my $maker_gene_curr="";
 my %contig_matches=();
 
-print STDERR "read maker file: started\n";
 while (my $feature = $maker_gff->next_feature){
 	if ($feature->primary_tag eq 'contig'){
 		$contig=$feature->{_gsf_seq_id};
@@ -113,7 +112,6 @@ my $gene_curr="";
 my %mRNAs=();
 my %genes=();
 
-print STDERR "read webapollo file: started\n";
 while (my $feature = $web_gff->next_feature) {
 ##A few renamings to match maker file structure in the end
 	$feature->{_source_tag}="webapollo";
@@ -149,7 +147,6 @@ while (my $feature = $web_gff->next_feature) {
 
 print STDERR "read webapollo file: done\n";
 ##Check correctness of tag-value pairs. If a pair/putpair tag is detected, load also partner gene for testing.
-print STDERR "test webapollo file: started\n";
 foreach my $key (keys %genes){
 	my $paired_gene="";
 	if ($web_genes{$key}[0]->{_gsf_tag_hash}{putpair}[0]){
@@ -170,7 +167,6 @@ print STDERR "test webapollo file: done\n";
 ###Replace maker genes with webapollo genes
 ###
 
-print STDERR "create final gff file: started\n";
 my %final_genes=replace(\%maker_genes,\%web_genes);
 ###continue here to write output gff3 file
 my $gffout = Bio::Tools::GFF->new(-file => ">$output", -gff_version => 3); 
@@ -255,28 +251,28 @@ sub test_names {
         if ($tag eq 'merged'){
                 if ($gene_name){
                         unless ($value=~/^\d+\|G\d+$/ || $value=~/^\d+\|G\d+\.N\d+$/ || $value=~/^\d+\|G\d+\.\d+$/) {
-                                print STDERR "In the %merged% tag for gene '$gene_name', the name '$value' does not follow SOPs. Correct and rerun script\n";}
-                } else {print STDERR "Did not find gene name while parsing a %merged% tag. Cannot give more information here. Error will be reported in the transcript feature.\n"}
+                                print STDERR "In 'merged' tag for gene '$gene_name', the name '$value' does not follow SOPs. Correct and rerun\n";}
+                } else {print STDERR "Did not find gene name while parsing a 'merged' tag. Cannot give more information here. Error will be reported in the transcript feature.\n"}
         } elsif ($tag eq 'paired') {
         	if ($gene_name){
                        unless ($value=~/^\d+\|G\d+$/ || $value=~/^\d+\|G\d+\.N\d+$/ || $value=~/^\d+\|G\d+\.\d+$/) {
-                                print STDERR "In the %pair%/%putpair% tag for gene '$gene_name', the name '$value' does not follow SOPs. Correct and rerun script\n";}
+                                print STDERR "In the 'pair'/'putpair' tag for gene '$gene_name', the name '$value' does not follow SOPs. Correct and rerun\n";}
                 } else {print STDERR "Did not find gene name while parsing a %pair%/%putpair% tag. Cannot give more information. Error will be reported in the transcript feature.\n"}        	
         } else {
                 if ($gene_name){
                         unless ($gene_name=~/^\d+\|G\d+$/ || $gene_name=~/^\d+\|G\d+\.N\d+$/ || $gene_name=~/^\d+\|G\d+\.\d+$/) {
-                                print STDERR "Gene name '$gene_name' does not follow SOPs. Correct and rerun script\n";}
-                } else {print STDERR "Gene name not defined for transcript '$trans_name'. Probably follow up error. Check previous error messages. Correct and rerun.\n"}
+                                print STDERR "Gene name '$gene_name' does not follow SOPs. Correct and rerun\n";}
+                } else {print STDERR "Gene name not defined for transcript '$trans_name'. Probably follow up error. Check previous error messages. Correct and rerun\n"}
 
                 if ($gene_name && $trans_name){
                         unless ($trans_name=~/^\d+\|T\d+-R\d+$/ || $trans_name=~/^\d+\|T\d+\.N\d+-R\d+$/ || $trans_name=~/^\d+\|T\d+\.\d+-R\d+$/) {
-                                print STDERR "Transcript name '$trans_name' does not follow SOPs. Correct and rerun script\n";}
-                        } else {print STDERR "Gene and/or transcript name not defined. Probably follow up error. Check previous error messages.\n"}
+                                print STDERR "Transcript name '$trans_name' from gene '$gene_name' does not follow SOPs. Correct and rerun\n";}
+                        } else {print STDERR "Gene and/or transcript name not defined. Probably follow up error. Check previous error messages\n"}
 
                 if ($gene_name){
                         $gene_name=~/(^\d+\|)G(.+)/;
                         unless ($trans_name=~/${1}T${2}/){
-                        print STDERR "Transcript '$trans_name' does not correctly correspond to parental gene name '$gene_name'. Correct and rerun script\n";}
+                        print STDERR "Transcript '$trans_name' does not correctly correspond to parental gene name '$gene_name'. Correct and rerun\n";}
                 } 
         }
 }
@@ -315,28 +311,28 @@ sub test_tag_values {
 		'noevidence'=>1, 'merged'=>1, 'corbound'=>1, 'cortrans'=>1, 'misassembly'=>1, 'delete'=>1, 'date_creation'=>1, 
 		'owner'=>1, 'ID'=>1, 'Alias'=>1, 'Name'=>1, 'date_last_modified'=>1);
 	foreach my $key (keys %{$feature->{_gsf_tag_hash}}) {
-		unless (exists $tags{$key}){print STDERR "The tag '$key'  in gene '$Name' is not defined. Allowed tags are:", Dumper(\%tags),"\n.Correct and rerun script.\n"}
+		unless (exists $tags{$key}){print STDERR "The tag '$key'  in gene '$Name' is not defined. Allowed tags are:", Dumper(\%tags),"\n.Correct and rerun\n"}
 		}
 ### test for correct tag-value relationships. 
 ## fusions
 	if ($Name=~/^\d+\|G\d+\.\d+$/){unless ($fusion){print STDERR "Tag fusion=1 expected for gene '$Name', but not found. Correct and rerun.\n"}}
 	if ($fusion){
 		unless ($Name=~/^\d+\|G\d+\.\d+$/) {
-			print STDERR "The gene '$Name' is tagged as fusion, but its name does not follow the SOP for fusions(^\\d+\\|G\\d+\\.\\d+$). Please check and if necessary correct and rerun script.\n"
+			print STDERR "The gene '$Name' is tagged as fusion, but its name does not follow the SOP for fusions(^\\d+\|G\\d+\\.\\d+). Please check and if necessary correct and rerun script.\n"
 		}
 	}
 
 ## reinspection
-	if ($reinspection){print STDERR "Gene '$Name' is tagged with reinspection. The comment is '$Note'. If no comment is given, you will get an 'uninitialized value $Note' error. You might want to finalize the gene model and rerun.\n"}
+	if ($reinspection){print STDERR "Gene '$Name' is tagged with reinspection. Comment: '$Note'. If no comment is given, you will get an 'uninitialized value \$Note' error. You might want to finalize the gene model and rerun.\n"}
 
 ## pseudogene 
-	if ($pseudogene){unless ($pseudogene=~/AT\dG\d+/){print STDERR "Gene '$Name' is tagged as 'pseudogene'. Value '$pseudogene' does not follow the expected regex (AT\\dG\\d+) for an Arabidopsis locus name (e.g. AT5G46470). Correct and rerun script.\n"}}
+	if ($pseudogene){unless ($pseudogene=~/AT\dG\d+/){print STDERR "Gene '$Name' is tagged as 'pseudogene'. Value '$pseudogene' does not follow the expected regex (AT\\dG\\d+) for an Arabidopsis locus name (e.g. AT5G46470). Correct and rerun\n"}}
 
 ##merged genes
 	if ($merged){
 		my @merged_genes=split(' ',$merged);
 		my $size = @ merged_genes;
-		if ($size <= 1) {print STDERR "Gene '$Name' is tagged with 'merged'. At least two genes are expected as value for 'merged', but found is only ", Dumper(\@merged_genes),"\n"}
+		if ($size <= 1) {print STDERR "Gene '$Name' is tagged with 'merged'. At least two genes are expected as value for 'merged', but found is only ",Dumper(\@merged_genes),"\n"}
 		my $gene_present='';
 		foreach (@merged_genes){
 			test_names($Name,'',$_,'merged');
@@ -348,18 +344,18 @@ sub test_tag_values {
 ##putpair and pair
 	if ($pair){
 		test_names($Name,'',$pair,'paired');
-		unless ($pair eq $paired_gene->{_gsf_tag_hash}{Name}[0]){
+		unless ($Name eq $paired_gene->{_gsf_tag_hash}{pair}[0]){
 			my $paired_pair = $paired_gene->{_gsf_tag_hash}{pair}[0];
 			my $paired_name = $paired_gene->{_gsf_tag_hash}{Name}[0];
-			print STDERR "Gene '$Name' and '$pair' are tagged as paired, but reciprocal tag in '$paired_name' is '$paired_pair'. Correct and rerun.\n"
+			print STDERR "Gene '$Name' and '$pair' are tagged as 'pair', but reciprocal tag of gene '$paired_name' is '$paired_pair'. Correct and rerun\n"
 		}
 	}
 	if ($putpair){
 		test_names($Name,'',$putpair,'paired');	
-               unless ($putpair eq $paired_gene->{_gsf_tag_hash}{Name}[0]){
+               unless ($Name eq $paired_gene->{_gsf_tag_hash}{putpair}[0]){
                         my $paired_pair = $paired_gene->{_gsf_tag_hash}{putpair}[0];
                         my $paired_name = $paired_gene->{_gsf_tag_hash}{Name}[0];
-                        print STDERR "Gene '$Name' and '$putpair' are tagged as paired, but reciprocal tag in '$paired_name' is '$paired_pair'. Correct and rerun.\n"
+                        print STDERR "Gene '$Name' and '$putpair' are tagged as 'putpair', but reciprocal tag in '$paired_name' is '$paired_pair'. Correct and rerun\n"
                 }
 
 	}
@@ -373,7 +369,7 @@ sub test_tag_values {
 		misassembly=>$misassembly,
 		delete=>$delete);
 	foreach my $key (keys %presence_tags){
-		if (defined $presence_tags{$key}){unless ($presence_tags{$key}==1){print STDERR "Expected value for '$key' is '1'. Correct this in gene '$Name' and rerun.\n"}}
+		if (defined $presence_tags{$key}){unless ($presence_tags{$key}==1){print STDERR "Expected value for '$key' is '1'. Correct this in gene '$Name' and rerun\n"}}
 	}
 ##remove empty tags again
 	foreach my $key (keys %{$feature->{_gsf_tag_hash}}){
@@ -424,7 +420,7 @@ sub replace {
 				foreach (@merged) {
 					$_=~/^(\d+\|G\d+)/;
 					unless ($deleted{$1}){
-						delete $maker_genes{$1} or die "Trying to replace some maker genes with the merged gene '$web_genes{$reanno_gene}[0]->{_gsf_tag_hash}{Name}[0]'. Tag 'merged' contains '$_', but '$1' is not in maker gff file. Correct and replace. \n";
+						delete $maker_genes{$1} or die "Trying to replace some maker genes with the merged gene '$web_genes{$reanno_gene}[0]->{_gsf_tag_hash}{Name}[0]'. Tag 'merged' contains '$_', but '$1' is not in maker gff file. Correct and rerun \n";
 						$deleted{$1}=1;
 					}
 				}
@@ -442,7 +438,7 @@ sub replace {
 				$maker_genes{$reanno_gene}=$web_genes{$reanno_gene};
 			}
 			else {
-				print STDERR "Gene 'reanno_gene' does not fit into any replacement sceme. Contact developer.\n"
+				print STDERR "Gene '$reanno_gene' does not fit into any replacement scheme. If this error is not resolved by correcting other errors, contact developer.\n"
 			}
 ##remove genes that are flagged with 'delete'
 			if (exists $maker_genes{$reanno_gene}[0]->{_gsf_tag_hash}{delete}){
