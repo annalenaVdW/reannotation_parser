@@ -4,6 +4,7 @@ use strict;
 use Data::Dumper;
 use Pod::Usage;
 use Getopt::Long;
+use rlib './lib'; #https://perlmaven.com/how-to-add-a-relative-directory-to-inc
 use Bio::Tools::GFF;
 
 my $help = 0;
