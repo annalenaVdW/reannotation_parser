@@ -117,15 +117,28 @@ my %web_genes=();
 my $gene_curr="";
 my %mRNAs=();
 my %genes=();
-
-open (my $summary_out,'>',$summary_file) or die "Cannot open $summary_file $!\n";
-print $summary_out "name\tfusion\tmerged\tpair\tputpair\ttruncated\tpseudogene\tnoevidence\tcorbound\tcortrans\tmisassembly\tdelete\tnote\tcomment\n";
+my $parent_ID="";
 
 while (my $feature = $web_gff->next_feature) {
+
+##This caused problems in genometools gff3 (Parent "65d0e642-8d73-4b9e-b655-9ecc76c069f7" on line 51 in file "6909_1_it1.gff" was not defined (via "ID=") ) so I am commenting it out to check if it works better without.
 ##A few renamings to match maker file structure in the end
 	$feature->{_source_tag}="webapollo";
-	$feature->{_gsf_tag_hash}{Alias}[0]=$feature->{_gsf_tag_hash}{ID}[0];
-	$feature->{_gsf_tag_hash}{ID}[0]=$feature->{_gsf_tag_hash}{Name}[0];
+	if ($feature->primary_tag eq 'gene'){
+		$feature->{_gsf_tag_hash}{Alias}[0]=$feature->{_gsf_tag_hash}{ID}[0];
+		$feature->{_gsf_tag_hash}{ID}[0]=$feature->{_gsf_tag_hash}{Name}[0];
+		$parent_ID=$feature->{_gsf_tag_hash}{ID}[0];
+	} elsif ($feature->primary_tag eq 'mRNA'){
+		$feature->{_gsf_tag_hash}{Alias}[0]=$feature->{_gsf_tag_hash}{ID}[0];
+		$feature->{_gsf_tag_hash}{ID}[0]=$feature->{_gsf_tag_hash}{Name}[0];
+		$feature->{_gsf_tag_hash}{Parent}[0]=$parent_ID;
+		$parent_ID=$feature->{_gsf_tag_hash}{ID}[0];
+	} else {
+		$feature->{_gsf_tag_hash}{Alias}[0]=$feature->{_gsf_tag_hash}{ID}[0];
+		$feature->{_gsf_tag_hash}{ID}[0]=$feature->{_gsf_tag_hash}{Name}[0];
+		$feature->{_gsf_tag_hash}{Parent}[0]=$parent_ID;		
+	}
+
 ##gene level
 	if ($feature->primary_tag eq 'gene'){
 		$gene_curr = get_name($feature);
@@ -135,7 +148,6 @@ while (my $feature = $web_gff->next_feature) {
 			$genes{$gene_curr}=1;
 		}		
 		%mRNAs=();
-	summary($feature,$summary_out);
 	}
 ##wrong primary tags
 	if ($feature->primary_tag=~/pseudogene|tRNA|snRNA|snoRNA|ncRNA|rRNA|miRNA|repeat_region|transposable_element/){
@@ -193,10 +205,28 @@ foreach my $contig (keys %contig_matches) {
 		}
 	}
 	shift $contig_matches{$contig};
-	foreach (@{$contig_matches{$contig}}){
-		$gffout->write_feature($_);
+##the next three lines would print all the maker 'match' and 'match_parts' in addition to genes.
+#	foreach (@{$contig_matches{$contig}}){
+#		$gffout->write_feature($_);
+#	}
+}
+
+
+###
+###create summary file with binary statistics for all genes
+###
+open (my $summary_out,'>',$summary_file) or die "Cannot open $summary_file $!\n";
+print $summary_out "name\tfusion\tmerged\tpair\tputpair\ttruncated\tpseudogene\tnoevidence\tcorbound\tcortrans\tmisassembly\tdelete\tnote\tcomment\n";
+foreach my $feature (keys %final_genes) {
+	if ($final_genes{$feature}[0]->primary_tag eq 'gene'){
+		summary($final_genes{$feature}[0],$summary_out);
+	} else {
+		print $final_genes{$feature}[0],"\n";
 	}
 }
+close $summary_out or die "Cannot close $summary_file $!\n";
+
+
 print STDERR "create final gff file: done\n";
 print STDERR "Script finished\n";
 
@@ -287,7 +317,7 @@ sub test_names {
 		}
                 if ($gene_name){
                         $gene_name=~/(^\d+\|)G(.+)/;
-                        unless ($trans_name=~/${1}T${2}/){
+                        unless ($trans_name=~/\Q${1}T${2}/){
 				print STDERR "Transcript '$trans_name' does not correctly correspond to parental gene name '$gene_name'. Correct and rerun\n";
 			}
                 } 
